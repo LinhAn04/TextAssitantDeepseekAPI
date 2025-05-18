@@ -1,88 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Text Assistant</title>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
             font-family: 'Google Sans', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f4f8;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            min-height: 100vh;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        body.dark-mode {
             background-color: #1a1a1a;
             color: #ffffff;
+            display: flex;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden; /* Ngăn cuộn ngang */
         }
-        .chat-container {
-            max-width: 800px;
-            width: 95%;
-            margin-bottom: 70px;
+        body.light-mode {
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
+        /* Giữ cố định các nút */
+        .sidebar-toggle-button, .new-conversation-button {
+            position: fixed; /* Giữ cố định khi cuộn */
+            top: 50px;
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-toggle-button {
+            left: 10px;
+        }
+        .new-conversation-button {
+            left: 50px;
+        }
+        .sidebar-toggle-button:hover, .new-conversation-button:hover {
+            color: #ffffff;
+        }
+        .sidebar-toggle-button svg, .new-conversation-button svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Giữ sidebar cố định */
+        .sidebar-wrapper {
+            position: fixed; /* Giữ sidebar cố định */
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            transition: margin-left 0.3s ease;
+            margin-left: 0;
+            z-index: 5;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #202123;
+            color: #d1d5db;
+            padding: 20px 10px;
+            overflow-y: auto;
+            border-right: 1px solid #2d2d2d;
+            height: 100%;
+        }
+        .sidebar.light-mode {
+            background-color: #e9ecef;
+            color: #495057;
+            border-right-color: #ced4da;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .conversation-item {
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #3a3a3a;
+        }
+        .conversation-item:hover {
+            background-color: #2e2e2e;
+        }
+        .conversation-item.light-mode {
+            border-color: #ced4da;
+        }
+        .conversation-item.light-mode:hover {
+            background-color: #dee2e6;
+        }
+        .conversation-info {
+            flex: 1;
+        }
+        .conversation-time {
+            font-size: 12px;
+            color: #a0a0a0;
+        }
+        .conversation-topic {
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        .delete-button {
+            background: none;
+            border: none;
+            color: #e57373;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .delete-button:hover {
+            color: #ef5350;
+        }
+        .delete-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Main wrapper điều chỉnh để tránh chồng lấp sidebar */
+        .main-wrapper {
+            max-width: 1000px;
+            width: 100%;
+            margin-left: 250px; /* Độ rộng của sidebar */
+            flex: 1;
             display: flex;
             flex-direction: column;
-            flex-grow: 1;
-            margin-top: 60px;
+            position: relative;
         }
+
+        /* Di chuyển chat-container xuống dưới */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #1a1a1a;
+            padding-top: 100px; /* Điều chỉnh khoảng cách từ trên xuống */
+            transition: background-color 0.3s ease;
+            padding-bottom: 120px;
+            position: relative; /* Đảm bảo không bị ảnh hưởng bởi các phần tử cố định */
+        }
+        .chat-container.light-mode {
+            background-color: #f8f9fa;
+        }
+
+        /* Giữ nút theme cố định */
+        .theme-switch-wrapper {
+            position: fixed; /* Giữ cố định khi cuộn */
+            top: 10px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+        .theme-switch {
+            position: relative;
+            width: 40px;
+            height: 20px;
+        }
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 20px;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Các phần khác giữ nguyên */
         .message-box {
-            background-color: #ffffff;
+            background-color: #2b2b2b;
             border-radius: 20px;
             padding: 16px 24px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin: 12px 20px;
+            box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+            color: #ffffff;
             word-break: break-word;
             line-height: 1.5;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        .dark-mode .message-box {
-            background-color: #2b2b2b;
-            box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+        .message-box.light-mode {
+            background-color: #fff;
+            color: #212529;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .user-message {
-            background-color: #e0f2fe;
+            background-color: #4a90e2;
             align-self: flex-end;
         }
-        .dark-mode .user-message {
-            background-color: #4a90e2;
+        .user-message.light-mode {
+            background-color: #007bff;
+            color: #fff;
         }
         .assistant-message {
-            background-color: #ffffff;
-            align-self: flex-start;
-        }
-        .dark-mode .assistant-message {
             background-color: #2b2b2b;
+            align-self: flex-start;
         }
         .message-box strong {
             font-weight: 700;
-            color: #1a73e8;
-        }
-        .dark-mode .message-box strong {
             color: #4a90e2;
         }
+        .message-box.light-mode strong {
+            color: #007bff;
+        }
         #input-container {
-            background-color: #ffffff;
+            background-color: #2b2b2b;
             padding: 16px;
             border-radius: 30px;
-            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 -2px 5px rgba(255, 255, 255, 0.06);
             width: 95%;
             max-width: 800px;
             display: flex;
             align-items: center;
             position: fixed;
-            bottom: 0;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
+            transition: background-color 0.3s ease;
+            z-index: 10;
         }
-        .dark-mode #input-container {
-            background-color: #2b2b2b;
-            box-shadow: 0 -2px 5px rgba(255, 255, 255, 0.06);
+        #input-container.light-mode {
+            background-color: #fff;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.06);
         }
         #prompt-input {
             flex: 1;
@@ -92,14 +264,12 @@
             margin-right: 12px;
             font-size: 16px;
             outline: none;
-            background-color: #f8fafc;
-        }
-        .dark-mode #prompt-input {
             background-color: #3a3a3a;
             color: #ffffff;
         }
-        #prompt-input:focus {
-            box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
+        #prompt-input.light-mode {
+            background-color: #e9ecef;
+            color: #495057;
         }
         #send-button {
             border: none;
@@ -111,95 +281,258 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         #send-button:hover {
             background-color: #1565c0;
         }
-        #send-button svg {
-            width: 24px;
-            height: 24px;
-        }
         .loading-indicator {
-            border: 4px solid rgba(0, 0, 0, 0.1);
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #4a90e2;
             border-radius: 50%;
-            border-top-color: #1a73e8;
             width: 24px;
             height: 24px;
             animation: spin 1s linear infinite;
             margin-right: 12px;
             display: none;
         }
-        .dark-mode .loading-indicator {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #4a90e2;
+        .loading-indicator.light-mode {
+            border-color: rgba(0, 0, 0, 0.1);
+            border-top-color: #007bff;
         }
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-        }
-        .theme-toggle input {
-            display: none;
-        }
-        .theme-toggle label {
-            width: 50px;
-            height: 24px;
-            background-color: #ccc;
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .theme-toggle label::before {
-            content: '';
-            width: 20px;
-            height: 20px;
-            background-color: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            transition: transform 0.3s ease;
-        }
-        .theme-toggle input:checked + label {
-            background-color: #1a73e8;
-        }
-        .theme-toggle input:checked + label::before {
-            transform: translateX(26px);
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="dark-mode">
-<div class="theme-toggle">
-    <input type="checkbox" id="theme-switch" checked>
-    <label for="theme-switch"></label>
+<body>
+<button class="sidebar-toggle-button" onclick="toggleSidebar()" title="View Conversations">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2"/>
+    </svg>
+</button>
+<button class="new-conversation-button" onclick="newConversation()" title="New Conversation">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+    </svg>
+</button>
+
+<div class="sidebar-wrapper">
+    <div class="sidebar" id="sidebar">
+        <ul id="conversation-list"></ul>
+    </div>
 </div>
-<div class="chat-container" id="chat-container"></div>
-<div id="input-container">
-    <div class="loading-indicator" id="loading-indicator"></div>
-    <input type="text" id="prompt-input" placeholder="Nhập câu hỏi của bạn...">
-    <button id="send-button" onclick="sendRequest()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M3.4 20.4l17.4-8.4-17.4-8.4v5.6h10.2v5.6H3.4v5.6z"/></svg>
-    </button>
+
+<div class="main-wrapper">
+    <div class="chat-container" id="chat-container"></div>
+
+    <div id="input-container">
+        <div class="loading-indicator" id="loading-indicator"></div>
+        <input type="text" id="prompt-input" placeholder="Enter your question..."/>
+        <button id="send-button" onclick="sendRequest()">Send</button>
+    </div>
+</div>
+
+<div class="theme-switch-wrapper">
+    <label class="theme-switch">
+        <input type="checkbox" id="checkbox" onchange="toggleTheme()">
+        <span class="slider round"></span>
+    </label>
 </div>
 
 <script>
-    // Xử lý chuyển đổi chế độ sáng/tối
-    const themeSwitch = document.getElementById('theme-switch');
-    themeSwitch.addEventListener('change', () => {
-        document.body.classList.toggle('dark-mode');
-    });
+    let trainContent = "";
 
-    // Xử lý phím Enter để gửi tin nhắn
-    const promptInput = document.getElementById('prompt-input');
+    async function loadTrainContent() {
+        try {
+            const response = await fetch('/train-content');
+            if (!response.ok) {
+                throw new Error(`Failed to load train content: ${response.status} ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (data.trainContent) {
+                trainContent = data.trainContent;
+                console.log("Train content loaded successfully");
+            } else {
+                console.warn("No train content found");
+                trainContent = "";
+            }
+        } catch (error) {
+            console.error("Error loading train content:", error);
+            alert(`Failed to load train content: ${error.message}. Please check the train.txt file or server.`);
+            trainContent = "";
+        }
+    }
+
+    loadTrainContent();
+
+    const body = document.body;
+    const chatContainer = document.getElementById("chat-container");
+    const promptInput = document.getElementById("prompt-input");
+    const sendButton = document.getElementById("send-button");
+    const loadingIndicator = document.getElementById("loading-indicator");
+    const conversationList = document.getElementById("conversation-list");
+    const sidebarWrapper = document.querySelector('.sidebar-wrapper');
+    const sidebar = document.getElementById("sidebar");
+    const inputContainer = document.getElementById("input-container");
+    const themeCheckbox = document.getElementById("checkbox");
+    let conversationId = Date.now().toString();
+    let sidebarVisible = true;
+
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === 'light') {
+        enableLightTheme();
+        themeCheckbox.checked = true;
+    }
+
+    function toggleTheme() {
+        if (themeCheckbox.checked) {
+            enableLightTheme();
+            localStorage.setItem('theme', 'light');
+        } else {
+            enableDarkTheme();
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    function enableLightTheme() {
+        body.classList.add('light-mode');
+        chatContainer.classList.add('light-mode');
+        inputContainer.classList.add('light-mode');
+        promptInput.classList.add('light-mode');
+        sidebar.classList.add('light-mode');
+        loadingIndicator.classList.add('light-mode');
+        document.querySelectorAll('.message-box').forEach(box => box.classList.add('light-mode'));
+        document.querySelectorAll('.conversation-item').forEach(item => item.classList.add('light-mode'));
+    }
+
+    function enableDarkTheme() {
+        body.classList.remove('light-mode');
+        chatContainer.classList.remove('light-mode');
+        inputContainer.classList.remove('light-mode');
+        promptInput.classList.remove('light-mode');
+        sidebar.classList.remove('light-mode');
+        loadingIndicator.classList.remove('light-mode');
+        document.querySelectorAll('.message-box').forEach(box => box.classList.remove('light-mode'));
+        document.querySelectorAll('.conversation-item').forEach(item => item.classList.remove('light-mode'));
+    }
+
+    function toggleSidebar() {
+        sidebarVisible = !sidebarVisible;
+        sidebarWrapper.style.marginLeft = sidebarVisible ? '0' : '-250px';
+    }
+
+    function newConversation() {
+        conversationId = Date.now().toString();
+        chatContainer.innerHTML = '';
+        promptInput.value = '';
+        loadConversations();
+    }
+
+    function formatDateTime(timestamp) {
+        const date = new Date(parseInt(timestamp));
+        return date.toLocaleString('en-US', {
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true,
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    function generateTopic(prompt) {
+        return prompt.length > 30 ? prompt.substring(0, 27) + '...' : prompt;
+    }
+
+    function deleteConversation(id) {
+        let conversations = JSON.parse(localStorage.getItem('conversations') || '{}');
+        delete conversations[id];
+        localStorage.setItem('conversations', JSON.stringify(conversations));
+        loadConversations();
+        if (conversationId === id) {
+            newConversation();
+        }
+    }
+
+    function loadConversations() {
+        conversationList.innerHTML = '';
+        const conversations = JSON.parse(localStorage.getItem('conversations') || '{}');
+        for (const id in conversations) {
+            const firstPrompt = conversations[id].find(msg => msg.role === 'user')?.content || 'Untitled';
+            const li = document.createElement('li');
+            li.className = 'conversation-item';
+            if (body.classList.contains('light-mode')) li.classList.add('light-mode');
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'conversation-info';
+            infoDiv.innerHTML = `
+                <div class="conversation-time">${formatDateTime(id)}</div>
+                <div class="conversation-topic">${generateTopic(firstPrompt)}</div>
+            `;
+            infoDiv.onclick = () => loadConversation(id);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-button';
+            deleteBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+            `;
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                deleteConversation(id);
+            };
+
+            li.appendChild(infoDiv);
+            li.appendChild(deleteBtn);
+            conversationList.appendChild(li);
+        }
+    }
+
+    async function saveConversation(prompt, response) {
+        try {
+            const payload = { conversationId, prompt, response };
+            const saveResponse = await fetch('/save-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!saveResponse.ok) {
+                throw new Error(`Failed to save conversation: ${saveResponse.status} ${saveResponse.statusText}`);
+            }
+
+            let conversations = JSON.parse(localStorage.getItem('conversations') || '{}');
+            if (!conversations[conversationId]) {
+                conversations[conversationId] = [];
+            }
+            conversations[conversationId].push({ role: 'user', content: prompt });
+            conversations[conversationId].push({ role: 'assistant', content: response });
+            localStorage.setItem('conversations', JSON.stringify(conversations));
+            loadConversations();
+        } catch (error) {
+            console.error("Error saving conversation:", error);
+            alert("Failed to save conversation. Please try again.");
+        }
+    }
+
+    function loadConversation(id) {
+        conversationId = id;
+        chatContainer.innerHTML = '';
+        const conversations = JSON.parse(localStorage.getItem('conversations') || '{}');
+        const messages = conversations[id] || [];
+        messages.forEach(msg => {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message-box ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`;
+            const sanitizedContent = msg.role === 'assistant' ?
+                marked.parse(msg.content.replace(/---/g, '')) :
+                msg.content;
+            msgDiv.innerHTML = sanitizedContent;
+            if (body.classList.contains('light-mode')) msgDiv.classList.add('light-mode');
+            chatContainer.appendChild(msgDiv);
+        });
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
     promptInput.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -207,64 +540,61 @@
         }
     });
 
-    function sendRequest() {
-        var promptInput = document.getElementById("prompt-input");
-        var chatContainer = document.getElementById("chat-container");
-        var sendButton = document.getElementById("send-button");
-        var loadingIndicator = document.getElementById("loading-indicator");
+    async function sendRequest() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) {
+            console.warn("No content to send");
+            return;
+        }
 
-        var prompt = promptInput.value.trim();
-        if (prompt === "") return;
+        const userMsg = document.createElement("div");
+        userMsg.className = "message-box user-message";
+        userMsg.textContent = prompt;
+        if (body.classList.contains('light-mode')) userMsg.classList.add('light-mode');
+        chatContainer.appendChild(userMsg);
 
-        // Hiển thị tin nhắn người dùng ngay lập tức
-        var userMessageDiv = document.createElement("div");
-        userMessageDiv.className = "message-box user-message";
-        userMessageDiv.textContent = prompt;
-        chatContainer.appendChild(userMessageDiv);
-        promptInput.value = ""; // Xóa nội dung input
-
-        // Hiển thị loading indicator và vô hiệu hóa nút gửi
+        promptInput.value = "";
         loadingIndicator.style.display = "inline-flex";
         sendButton.disabled = true;
 
-        var formData = new FormData();
-        formData.append("prompt", prompt);
+        try {
+            const formData = new FormData();
+            formData.append('prompt', prompt);
+            formData.append('trainContent', trainContent);
+            formData.append('conversationId', conversationId);
 
-        fetch("/chat", {
-            method: "POST",
-            body: formData,
-        })
-            .then(response => response.json())
-            .then(data => {
-                loadingIndicator.style.display = "none";
-                sendButton.disabled = false;
-
-                // Hiển thị phản hồi từ trợ lý
-                var assistantMessageDiv = document.createElement("div");
-                assistantMessageDiv.className = "message-box assistant-message";
-                if (data && data.response) {
-                    // Parse Markdown và loại bỏ dòng trống thừa
-                    const htmlContent = marked.parse(data.response);
-                    // Loại bỏ thẻ <p> hoặc <br> dư ở cuối
-                    assistantMessageDiv.innerHTML = htmlContent.trim(); // trim() loại bỏ khoảng trắng và xuống dòng thừa
-                } else {
-                    assistantMessageDiv.textContent = "No response from server.";
-                    console.log("Invalid response:", data);
-                }
-                chatContainer.appendChild(assistantMessageDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            })
-            .catch(error => {
-                console.error("Fetch error:", error);
-                loadingIndicator.style.display = "none";
-                sendButton.disabled = false;
-                var errorDiv = document.createElement("div");
-                errorDiv.className = "message-box assistant-message";
-                errorDiv.textContent = "Lỗi: Can't connect to the server. Please retry.";
-                chatContainer.appendChild(errorDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+            const response = await fetch('/chat', {
+                method: 'POST',
+                body: formData
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status} - ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const botMsg = document.createElement("div");
+            botMsg.className = "message-box assistant-message";
+            botMsg.innerHTML = data?.response ? marked.parse(data.response.replace(/---/g, '')) : "No response received from server.";
+            if (body.classList.contains('light-mode')) botMsg.classList.add('light-mode');
+            chatContainer.appendChild(botMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            await saveConversation(prompt, data?.response || "No response received from server.");
+        } catch (err) {
+            console.error("Error sending request:", err);
+            const errMsg = document.createElement("div");
+            errMsg.className = "message-box assistant-message";
+            errMsg.textContent = `Error: ${err.message || "Unable to connect to server."}`;
+            chatContainer.appendChild(errMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        } finally {
+            loadingIndicator.style.display = "none";
+            sendButton.disabled = false;
+        }
     }
+
+    loadConversations();
 </script>
 </body>
 </html>

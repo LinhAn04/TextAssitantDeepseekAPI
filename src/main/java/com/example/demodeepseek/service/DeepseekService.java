@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -28,15 +27,30 @@ public class DeepseekService {
     @Value("${deepseek.api.key}")
     private String DEEPSEEK_API_KEY;
 
-    public String getDeepseekResponse(String prompt) throws IOException {
+    // Hàm làm sạch chuỗi, loại bỏ ký tự điều khiển
+    private String sanitizeString(String input) {
+        if (input == null) return "";
+        // Loại bỏ các ký tự điều khiển (0x00-0x1F) ngoại trừ newline (\n) và tab (\t)
+        return input.replaceAll("[\\p{Cntrl}&&[^\n\t]]", "");
+    }
+
+    public String getDeepseekResponse(String prompt, String trainContent, String conversationId) throws Exception {
         if (DEEPSEEK_API_KEY == null || DEEPSEEK_API_KEY.trim().isEmpty()) {
             logger.error("DeepSeek API key chưa được cung cấp");
-            return "DeepSeek API key chưa được cung cấp";
+            throw new IllegalStateException("DeepSeek API key chưa được cung cấp");
         }
 
+        String systemContext = trainContent.isEmpty() ? "Không có ngữ cảnh huấn luyện." : trainContent;
+        String cleanSystemContext = sanitizeString(systemContext);
+        String cleanPrompt = sanitizeString(prompt);
+
+        logger.info("System Context: {}", cleanSystemContext);
+        logger.info("Prompt: {}", cleanPrompt);
+
         String requestBody = String.format(
-                "{\"model\": \"deepseek-chat\", \"messages\": [{\"role\": \"user\", \"content\": \"%s\"}], \"max_tokens\": 150}",
-                prompt
+                "{\"model\": \"deepseek-chat\", \"messages\": [{\"role\": \"system\", \"content\": \"%s\"}, {\"role\": \"user\", \"content\": \"%s\"}], \"max_tokens\": 150}",
+                cleanSystemContext.replace("\"", "\\\""),
+                cleanPrompt.replace("\"", "\\\"")
         );
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -47,38 +61,18 @@ public class DeepseekService {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
-        try {
-            logger.info("Gửi yêu cầu đến DeepSeek API với prompt: {}", prompt);
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            logger.debug("Phản hồi từ DeepSeek API: {}", response.body());
-
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                String responseBody = response.body();
-                JsonNode jsonResponse = mapper.readTree(responseBody);
-
-                if (jsonResponse.has("choices") && jsonResponse.get("choices").isArray() && !jsonResponse.get("choices").isEmpty()) {
-                    JsonNode choice = jsonResponse.get("choices").get(0);
-                    if (choice.has("message") && choice.get("message").has("content")) {
-                        return choice.get("message").get("content").asText();
-                    } else {
-                        logger.warn("Không tìm thấy message hoặc content trong phản hồi: {}", responseBody);
-                        return "Phản hồi không chứa nội dung hợp lệ";
-                    }
-                } else {
-                    logger.warn("Không tìm thấy choices trong phản hồi: {}", responseBody);
-                    return "Phản hồi không chứa choices";
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            JsonNode jsonResponse = mapper.readTree(response.body());
+            if (jsonResponse.has("choices") && jsonResponse.get("choices").isArray() && !jsonResponse.get("choices").isEmpty()) {
+                JsonNode choice = jsonResponse.get("choices").get(0);
+                if (choice.has("message") && choice.get("message").has("content")) {
+                    return choice.get("message").get("content").asText();
                 }
-            } else {
-                logger.error("Lỗi API DeepSeek: {} - {}", response.statusCode(), response.body());
-                return "Lỗi API DeepSeek: " + response.statusCode() + ", " + response.body();
+                throw new IOException("Phản hồi từ DeepSeek không chứa nội dung hợp lệ");
             }
-        } catch (IOException e) {
-            logger.error("Lỗi I/O khi gọi DeepSeek API: {}", e.getMessage(), e);
-            return "Lỗi I/O khi gọi DeepSeek API: " + e.getMessage();
-        } catch (InterruptedException e) {
-            logger.error("Yêu cầu bị gián đoạn: {}", e.getMessage(), e);
-            Thread.currentThread().interrupt(); // Khôi phục trạng thái gián đoạn
-            return "Yêu cầu bị gián đoạn: " + e.getMessage();
+            throw new IOException("Phản hồi từ DeepSeek không chứa choices");
         }
+        throw new IOException("Lỗi API DeepSeek: " + response.statusCode() + ", " + response.body());
     }
 }
