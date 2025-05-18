@@ -16,42 +16,16 @@
             display: flex;
             min-height: 100vh;
             transition: background-color 0.3s ease, color 0.3s ease;
-            overflow-x: hidden; /* Ngăn cuộn ngang */
+            overflow-x: hidden;
         }
         body.light-mode {
             background-color: #f8f9fa;
             color: #212529;
         }
 
-        /* Giữ cố định các nút */
-        .sidebar-toggle-button, .new-conversation-button {
-            position: fixed; /* Giữ cố định khi cuộn */
-            top: 50px;
-            background: none;
-            border: none;
-            color: #d1d5db;
-            cursor: pointer;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-        }
-        .sidebar-toggle-button {
-            left: 10px;
-        }
-        .new-conversation-button {
-            left: 50px;
-        }
-        .sidebar-toggle-button:hover, .new-conversation-button:hover {
-            color: #ffffff;
-        }
-        .sidebar-toggle-button svg, .new-conversation-button svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        /* Giữ sidebar cố định */
+        /* Sidebar wrapper */
         .sidebar-wrapper {
-            position: fixed; /* Giữ sidebar cố định */
+            position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
@@ -60,6 +34,8 @@
             margin-left: 0;
             z-index: 5;
         }
+
+        /* Sidebar */
         .sidebar {
             width: 250px;
             background-color: #202123;
@@ -79,6 +55,36 @@
             padding: 0;
             margin: 0;
         }
+
+        /* Buttons bên cạnh sidebar */
+        .sidebar-toggle-button, .new-conversation-button {
+            position: fixed; /* Giữ cố định */
+            top: 10px; /* Đặt sát top */
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            margin-left: 25px;
+            transition: left 0.3s ease; /* Hiệu ứng di chuyển mượt mà */
+        }
+        .sidebar-toggle-button {
+            left: 250px; /* Mặc định nằm ngay bên phải sidebar */
+        }
+        .new-conversation-button {
+            left: 290px; /* Nằm bên phải sidebar-toggle-button */
+        }
+        .sidebar-toggle-button:hover, .new-conversation-button:hover {
+            color: #ffffff;
+        }
+        .sidebar-toggle-button svg, .new-conversation-button svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Conversation items */
         .conversation-item {
             padding: 10px 15px;
             margin: 5px 0;
@@ -126,81 +132,32 @@
             height: 16px;
         }
 
-        /* Main wrapper điều chỉnh để tránh chồng lấp sidebar */
+        /* Main wrapper */
         .main-wrapper {
+            margin-left: 270px; /* Để lại khoảng cách cho sidebar (250px) + 20px khoảng cách */
             max-width: 1000px;
-            width: 100%;
-            margin-left: 250px; /* Độ rộng của sidebar */
+            width: calc(100% - 270px);
             flex: 1;
             display: flex;
             flex-direction: column;
             position: relative;
         }
 
-        /* Di chuyển chat-container xuống dưới */
+        /* Chat container */
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             background-color: #1a1a1a;
-            padding-top: 100px; /* Điều chỉnh khoảng cách từ trên xuống */
-            transition: background-color 0.3s ease;
+            padding-top: 20px;
             padding-bottom: 120px;
-            position: relative; /* Đảm bảo không bị ảnh hưởng bởi các phần tử cố định */
+            transition: background-color 0.3s ease;
         }
         .chat-container.light-mode {
             background-color: #f8f9fa;
         }
 
-        /* Giữ nút theme cố định */
-        .theme-switch-wrapper {
-            position: fixed; /* Giữ cố định khi cuộn */
-            top: 10px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            z-index: 10;
-        }
-        .theme-switch {
-            position: relative;
-            width: 40px;
-            height: 20px;
-        }
-        .theme-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            border-radius: 20px;
-            transition: .4s;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #2196F3;
-        }
-        input:checked + .slider:before {
-            transform: translateX(20px);
-        }
-
-        /* Các phần khác giữ nguyên */
+        /* Message box */
         .message-box {
             background-color: #2b2b2b;
             border-radius: 20px;
@@ -236,6 +193,8 @@
         .message-box.light-mode strong {
             color: #007bff;
         }
+
+        /* Input container */
         #input-container {
             background-color: #2b2b2b;
             padding: 16px;
@@ -302,9 +261,58 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Theme switch */
+        .theme-switch-wrapper {
+            position: fixed;
+            top: 10px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+        .theme-switch {
+            position: relative;
+            width: 40px;
+            height: 20px;
+        }
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 20px;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
     </style>
 </head>
 <body>
+<!-- Các nút được đặt bên ngoài sidebar-wrapper để không bị ẩn -->
 <button class="sidebar-toggle-button" onclick="toggleSidebar()" title="View Conversations">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path fill="currentColor" d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2"/>
@@ -375,6 +383,8 @@
     const sidebar = document.getElementById("sidebar");
     const inputContainer = document.getElementById("input-container");
     const themeCheckbox = document.getElementById("checkbox");
+    const sidebarToggleButton = document.querySelector('.sidebar-toggle-button');
+    const newConversationButton = document.querySelector('.new-conversation-button');
     let conversationId = Date.now().toString();
     let sidebarVisible = true;
 
@@ -419,6 +429,8 @@
     function toggleSidebar() {
         sidebarVisible = !sidebarVisible;
         sidebarWrapper.style.marginLeft = sidebarVisible ? '0' : '-250px';
+        sidebarToggleButton.style.left = sidebarVisible ? '250px' : '0px';
+        newConversationButton.style.left = sidebarVisible ? '290px' : '40px';
     }
 
     function newConversation() {
@@ -508,10 +520,11 @@
             conversations[conversationId].push({ role: 'user', content: prompt });
             conversations[conversationId].push({ role: 'assistant', content: response });
             localStorage.setItem('conversations', JSON.stringify(conversations));
+            console.log('Conversation saved to localStorage:', conversations);
             loadConversations();
         } catch (error) {
             console.error("Error saving conversation:", error);
-            alert("Failed to save conversation. Please try again.");
+            alert("Failed to save conversation: " + error.message);
         }
     }
 
@@ -521,7 +534,7 @@
         const conversations = JSON.parse(localStorage.getItem('conversations') || '{}');
         const messages = conversations[id] || [];
         messages.forEach(msg => {
-            const msgDiv = document.createElement('div');
+            const msgDiv = document.createElement('div'); // Sửa lỗi cú pháp
             msgDiv.className = `message-box ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`;
             const sanitizedContent = msg.role === 'assistant' ?
                 marked.parse(msg.content.replace(/---/g, '')) :
@@ -578,8 +591,11 @@
             botMsg.innerHTML = data?.response ? marked.parse(data.response.replace(/---/g, '')) : "No response received from server.";
             if (body.classList.contains('light-mode')) botMsg.classList.add('light-mode');
             chatContainer.appendChild(botMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
 
+            // Cuộn xuống tin nhắn mới nhất của bot
+            botMsg.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+            // Lưu cuộc trò chuyện vào localStorage
             await saveConversation(prompt, data?.response || "No response received from server.");
         } catch (err) {
             console.error("Error sending request:", err);
@@ -587,7 +603,7 @@
             errMsg.className = "message-box assistant-message";
             errMsg.textContent = `Error: ${err.message || "Unable to connect to server."}`;
             chatContainer.appendChild(errMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            errMsg.scrollIntoView({ behavior: 'smooth', block: 'end' });
         } finally {
             loadingIndicator.style.display = "none";
             sendButton.disabled = false;
